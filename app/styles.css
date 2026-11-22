@@ -266,3 +266,12 @@ h1, h2, h3, p { margin: 0; }
 a.btn { text-decoration: none; }
 .section-title.between { display: flex; }
 .ico { font-weight: 600; font-size: 14px; }
+
+/* Rutekort */
+.routemap svg { display: block; width: 100%; height: auto; border-radius: 16px; font-family: var(--font); }
+.routemap .mapbtn { display: block; width: 100%; border-radius: 16px; }
+.routemap.full { border: 1px solid var(--line); border-radius: 17px; overflow: hidden; }
+.routemap a { cursor: pointer; }
+.routemap a:active circle:not(.pulse) { stroke-width: 4; }
+.pulse { fill: #1a6e58; opacity: .3; transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+@keyframes pulse { from { transform: scale(.8); opacity: .4; } to { transform: scale(1.7); opacity: 0; } }

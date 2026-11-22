@@ -12,7 +12,8 @@ window.B360Staff = function (api) {
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     left: '<path d="m15 6-6 6 6 6"/>',
     box: '<path d="M4 8 12 4l8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>',
-    msg: '<path d="M4 5h16v11H9l-5 4z"/>'
+    msg: '<path d="M4 5h16v11H9l-5 4z"/>',
+    expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>'
   });
 
   // ---------- Datoer ----------
@@ -90,6 +91,78 @@ window.B360Staff = function (api) {
       (v.tasks.length ? ' · ' + v.tasks.length + (v.tasks.length === 1 ? ' opgave' : ' opgaver') : '') + '</div></div>' + statusPill(v) + '</button>';
   }
 
+  // ---------- Rutekort (stiliseret, ikke et rigtigt kort) ----------
+  // Tre faste layouts, hvor ruten fra lageret (øverst til venstre) løber i en bue uden at krydse sig selv
+  var LAYOUTS = [
+    [[30, 38], [57, 21], [80, 46], [63, 72], [30, 70]],
+    [[21, 52], [45, 72], [74, 66], [82, 35], [55, 17]],
+    [[26, 42], [50, 35], [76, 25], [80, 62], [48, 74]]
+  ];
+  var DEPOT = [9, 13];
+  function mapsUrl(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v.addr); }
+  function routeUrl(list) {
+    if (!list.length) return '#';
+    var stops = list.map(function (v) { return v.addr; });
+    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(stops[stops.length - 1]) +
+      (stops.length > 1 ? '&waypoints=' + encodeURIComponent(stops.slice(0, -1).join('|')) : '');
+  }
+  function spot(date, i) {
+    var k = 0;
+    for (var c = 0; c < date.length; c++) k += date.charCodeAt(c);
+    var layout = LAYOUTS[k % LAYOUTS.length];
+    return layout[i % layout.length];
+  }
+  function mapSvg(list, w, h, full) {
+    function X(x) { return (x / 100 * w).toFixed(1); }
+    function Y(y) { return (y / 100 * h).toFixed(1); }
+    function P(p) { return X(p[0]) + ' ' + Y(p[1]); }
+    function road(a, b, width) { return '<path d="M' + P(a) + 'L' + P(b) + '" stroke="#fff" stroke-width="' + width + '" stroke-linecap="round"/>'; }
+    var date = list.length ? list[0].date : baseIso;
+    var pts = list.map(function (v, i) { return spot(date, i); });
+    var nextIdx = -1;
+    list.forEach(function (v, i) { if (nextIdx < 0 && vs(v.id).status !== 'done') nextIdx = i; });
+
+    var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rutekort med ' + list.length + ' stop">' +
+      '<rect width="' + w + '" height="' + h + '" rx="16" fill="#e8ece2"/>' +
+      '<path d="M0 ' + Y(90) + 'C' + P([25, 83]) + ' ' + P([40, 99]) + ' ' + P([62, 92]) + 'S' + P([90, 84]) + ' ' + P([100, 88]) + 'L' + P([100, 100]) + 'L' + P([0, 100]) + 'Z" fill="#cfe1e3"/>' +
+      '<rect x="' + X(52) + '" y="' + Y(44) + '" width="' + X(17) + '" height="' + Y(13) + '" rx="8" fill="#d6e6cc"/>' +
+      '<rect x="' + X(15) + '" y="' + Y(4) + '" width="' + X(13) + '" height="' + Y(15) + '" rx="8" fill="#d6e6cc"/>' +
+      road([0, 31], [100, 24], 7) + road([34, 0], [38, 100], 7) + road([0, 63], [100, 57], 7) +
+      road([64, 0], [61, 88], 4) + road([88, 0], [91, 84], 4) + road([12, 0], [10, 86], 4) + road([0, 47], [100, 42], 3) + road([0, 80], [100, 75], 3);
+
+    // Rute: kørt strækning er fuldt optrukket, resten er prikket
+    var prev = DEPOT;
+    pts.forEach(function (p, i) {
+      var done = vs(list[i].id).status === 'done';
+      svg += '<path d="M' + P(prev) + 'L' + P(p) + '" stroke="#1b4436" stroke-width="3" stroke-linecap="round" fill="none"' + (done ? '' : ' stroke-dasharray="1 7"') + '/>';
+      prev = p;
+    });
+    svg += '<g transform="translate(' + X(DEPOT[0]) + ' ' + Y(DEPOT[1]) + ')"><rect x="-10" y="-10" width="20" height="20" rx="6" fill="#1b4436"/><path d="M-5 0 0-4.500 5 0v5h-10z" fill="none" stroke="#fff" stroke-width="1.500" stroke-linejoin="round"/></g>';
+
+    pts.forEach(function (p, i) {
+      var v = list[i], status = vs(v.id).status, isNext = i === nextIdx;
+      var fill = status === 'done' ? '#e3ecdf' : isNext ? '#1a6e58' : '#fff';
+      var ink = status === 'done' ? '#6b7a72' : isNext ? '#fff' : '#173f33';
+      var pin = '<g transform="translate(' + X(p[0]) + ' ' + Y(p[1]) + ')">' + (isNext ? '<circle r="15" class="pulse"/>' : '') +
+        '<circle r="' + (full ? 15 : 12) + '" fill="' + fill + '" stroke="#1a6e58" stroke-width="2"/>' +
+        '<text y="' + (full ? 5 : 4) + '" text-anchor="middle" font-size="' + (full ? 14 : 12) + '" font-weight="600" fill="' + ink + '">' + (i + 1) + '</text>' +
+        (full ? '<text y="32" text-anchor="middle" font-size="11" font-weight="600" fill="#173f33" stroke="#e8ece2" stroke-width="3.500" paint-order="stroke">' + v.time + '</text>' : '') + '</g>';
+      svg += full ? '<a href="' + mapsUrl(v) + '" target="_blank" rel="noopener" aria-label="Stop ' + (i + 1) + ': åbn ' + v.addr + ' i Google Maps">' + pin + '</a>' : pin;
+    });
+    return svg + '</svg>';
+  }
+
+  function sMap() {
+    var list = on(baseIso);
+    return api.backbar('Dagens rute') + '<div class="eyebrow">' + cap(nice(base)) + ' · ' + list.length + ' stop</div>' +
+      '<div class="routemap full">' + mapSvg(list, 320, 400, true) + '</div>' +
+      '<p class="small muted" style="margin:12px 0 16px">Tryk på et punkt for at åbne adressen i Google Maps.</p>' +
+      '<a class="btn" href="' + routeUrl(list) + '" target="_blank" rel="noopener">' + icon('route', 20) + 'Hele ruten i Google Maps</a>' +
+      '<h2 class="section-title">Stop i rækkefølge</h2><div class="list">' + list.map(function (v, i) {
+        return '<button data-act="s-open" data-id="' + v.id + '"><div class="ico">' + (i + 1) + '</div><div class="grow"><div class="t">' + v.addr + '</div><div class="s">kl. ' + v.time + ' · ' + v.name + '</div></div>' + statusPill(v) + '</button>';
+      }).join('') + '</div>';
+  }
+
   // ---------- Skærme ----------
   function sToday() {
     var list = on(baseIso), done = list.filter(function (v) { return vs(v.id).status === 'done'; }).length;
@@ -106,6 +179,8 @@ window.B360Staff = function (api) {
 
     return api.topbar(true) + '<div class="eyebrow">' + (isToday ? 'I dag' : 'Næste rutedag') + ' · ' + nice(base) + '</div>' +
       '<h1 class="headline">' + list.length + ' besøg<br>på ruten.</h1>' + hero +
+      '<div class="card routemap" style="margin-top:16px"><div class="between" style="margin-bottom:12px"><h3>Rutekort</h3><button class="iconbtn sm" data-act="s-map" aria-label="Maksimér kortet">' + icon('expand', 18) + '</button></div>' +
+      '<button class="mapbtn" data-act="s-map" aria-label="Åbn kortet i fuld størrelse">' + mapSvg(list, 320, 170, false) + '</button></div>' +
       '<div class="tiles"><button class="tile" data-act="tab" data-id="opgaver">' + icon('tasks') + '<span>' + openTodos() + ' åbne opgaver</span></button>' +
       '<button class="tile" data-act="tab" data-id="kalender">' + icon('cal') + '<span>Se kalenderen</span></button></div>' +
       '<div class="card" style="margin-top:16px"><div class="between"><h3>Dagens rute</h3><span class="pill">' + done + ' af ' + list.length + '</span></div>' +
@@ -226,6 +301,7 @@ window.B360Staff = function (api) {
   function cur() { return byId(state.view.id); }
   var actions = {
     's-open': function (id) { api.go(state.stab, { name: 'svisit', id: id }); },
+    's-map': function () { api.go(state.stab, { name: 'smap' }); },
     's-day': function (id) { st.sel = id; api.render(true); },
     's-month': function (id) { var p = st.month.split('-'), d = new Date(+p[0], +p[1] - 1 + (+id), 1); st.month = iso(d).slice(0, 7); api.render(true); },
     's-start': function (id) { var s = vs(id); s.status = 'started'; s.start = Date.now(); api.render(true); api.toast('Besøget er startet'); },
@@ -274,6 +350,7 @@ window.B360Staff = function (api) {
     badge: function (tab) { return tab === 'opgaver' ? openTodos() : 0; },
     screen: function () {
       if (state.view && state.view.name === 'svisit' && byId(state.view.id)) return sVisit(byId(state.view.id));
+      if (state.view && state.view.name === 'smap') return sMap();
       return { idag: sToday, kalender: sCalendar, opgaver: sTodos, profil: sProfile }[state.stab]();
     },
     actions: actions,
