@@ -84,7 +84,7 @@
   // ---------- Tilstand ----------
   var state = load() || {};
   state = Object.assign({
-    auth: false, tab: 'overblik', view: null, season: 'efteraar', plan: 'total',
+    auth: false, mode: 'kunde', tab: 'overblik', stab: 'idag', view: null, season: 'efteraar', plan: 'total',
     usedHours: 2, tasks: [], quotes: {}, addons: {}, notifSeen: false, draftHours: 1
   }, state);
   state.view = null;
@@ -150,10 +150,14 @@
   }
 
   // ---------- Fælles byggesten ----------
-  function topbar() {
-    return '<div class="topbar">' + brand() +
-      '<button class="iconbtn" data-act="notifs" aria-label="Notifikationer">' + icon('bell', 20) + (state.notifSeen ? '' : '<i class="dot"></i>') + '</button></div>' +
-      '<button class="address" data-act="home-info">' + icon('pin', 18) + '<span class="grow">' + HOME.address + ' · ' + HOME.label + '</span>' + icon('down', 18) + '</button>';
+  function topbar(staff) {
+    var right = staff ? '<button class="iconbtn" data-act="s-akut" aria-label="Akut fare">' + icon('alert', 20) + '</button>' :
+      '<button class="iconbtn" data-act="notifs" aria-label="Notifikationer">' + icon('bell', 20) + (state.notifSeen ? '' : '<i class="dot"></i>') + '</button>';
+    var modes = STAFF ? '<div class="mode" role="tablist" aria-label="Visning">' + [['kunde', 'Kunde'], ['staff', 'Medarbejder']].map(function (m) {
+      return '<button data-act="mode" data-id="' + m[0] + '" class="' + (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
+    }).join('') + '</div>' : '';
+    return '<div class="topbar">' + brand() + right + '</div>' + modes +
+      (staff ? '' : '<button class="address" data-act="home-info">' + icon('pin', 18) + '<span class="grow">' + HOME.address + ' · ' + HOME.label + '</span>' + icon('down', 18) + '</button>');
   }
   function brand() {
     return '<div class="brand"><div class="mark">' + icon('home', 20) + '</div><span>bolig<b>360</b></span></div>';
@@ -360,7 +364,9 @@
   // ---------- Rendering ----------
   function render(keepScroll) {
     var s = $('screen'), top = s.scrollTop, html;
+    var staff = isStaff();
     if (!state.auth) html = vLogin();
+    else if (staff) html = STAFF.screen();
     else if (state.view && state.view.name === 'visit') html = vVisit(visit(state.view.id));
     else if (state.view && state.view.name === 'report') html = vReport(visit(state.view.id));
     else html = { overblik: vOverblik, servicebog: vServicebog, bestil: vBestil, aftale: vAftale }[state.tab]();
@@ -371,33 +377,46 @@
     var pending = QUOTES.filter(function (q) { return !state.quotes[q.id]; }).length;
     var bar = $('tabbar');
     bar.hidden = !state.auth;
-    bar.innerHTML = TABS.map(function (t) {
-      var badge = t[0] === 'servicebog' && pending ? '<i class="badge">' + pending + '</i>' : '';
-      return '<button data-act="tab" data-id="' + t[0] + '" class="' + (state.tab === t[0] && !state.view ? 'on' : '') + '">' + icon(t[2]) + badge + '<span>' + t[1] + '</span></button>';
+    bar.innerHTML = (staff ? STAFF.tabs : TABS).map(function (t) {
+      var n = staff ? STAFF.badge(t[0]) : (t[0] === 'servicebog' ? pending : 0);
+      return '<button data-act="tab" data-id="' + t[0] + '" class="' + (state[tabKey()] === t[0] && !state.view ? 'on' : '') + '">' + icon(t[2]) + (n ? '<i class="badge">' + n + '</i>' : '') + '<span>' + t[1] + '</span></button>';
     }).join('');
     save();
   }
 
+  function isStaff() { return !!STAFF && state.mode === 'staff'; }
+  function tabKey() { return isStaff() ? 'stab' : 'tab'; }
+  function pushHistory() {
+    try { history.pushState({ mode: state.mode, tab: state.tab, stab: state.stab, view: state.view }, ''); } catch (e) { /* virker også uden historik */ }
+  }
+
   // Navigation med historik, så telefonens tilbage-knap virker
   function go(tab, view) {
-    if (tab === state.tab && !view && !state.view) { closeSheet(); $('screen').scrollTop = 0; return; }
-    state.tab = tab; state.view = view || null;
+    if (tab === state[tabKey()] && !view && !state.view) { closeSheet(); $('screen').scrollTop = 0; return; }
+    state[tabKey()] = tab; state.view = view || null;
     closeSheet();
-    try { history.pushState({ tab: state.tab, view: state.view }, ''); } catch (e) { /* virker også uden historik */ }
+    pushHistory();
     render();
   }
   window.addEventListener('popstate', function (e) {
     if (!state.auth) return;
+    var h = e.state || {};
     closeSheet();
-    state.tab = (e.state && e.state.tab) || 'overblik';
-    state.view = (e.state && e.state.view) || null;
+    state.mode = h.mode || 'kunde';
+    state.tab = h.tab || 'overblik';
+    state.stab = h.stab || 'idag';
+    state.view = h.view || null;
     render();
   });
 
   // ---------- Handlinger ----------
   var actions = {
     tab: function (id) { go(id); },
-    back: function () { if (history.state && history.state.view) history.back(); else go(state.tab); },
+    back: function () { if (history.state && history.state.view) history.back(); else go(state[tabKey()]); },
+    mode: function (id) {
+      if (id === state.mode) return;
+      state.mode = id; state.view = null; closeSheet(); pushHistory(); render();
+    },
     season: function (id) { state.season = id; render(true); },
     'open-visit': function (id) { go(state.tab, { name: 'visit', id: id }); },
     'open-report': function (id) { go(state.tab, { name: 'report', id: id }); },
@@ -424,7 +443,7 @@
     'cancel-confirm': function () { closeSheet(); toast('Prototype: opsigelsen er ikke gennemført'); },
     'export': function () { toast('Prototype: eksport kommer i næste version'); },
     reschedule: function () { toast('Vi kontakter dig om et nyt tidspunkt'); },
-    logout: function () { state.auth = false; state.tab = 'overblik'; state.view = null; render(); }
+    logout: function () { state.auth = false; state.mode = 'kunde'; state.tab = 'overblik'; state.stab = 'idag'; state.view = null; closeSheet(); render(); }
   };
 
   document.addEventListener('click', function (e) {
@@ -448,6 +467,7 @@
       render(true);
       toast('Opgaven er tilføjet til besøget');
     }
+    if (STAFF) STAFF.submit(e);
   });
 
   document.addEventListener('input', function (e) {
@@ -455,6 +475,13 @@
     if (e.target.id === 'task-text') $('task-error').hidden = true;
   });
 
-  try { history.replaceState({ tab: state.tab, view: null }, ''); } catch (e) { /* ok */ }
+  // Medarbejderdelen (medarbejder.js) kobles på, hvis den er indlæst
+  var STAFF = window.B360Staff ? window.B360Staff({
+    state: state, $: $, esc: esc, icon: icon, hrs: hrs, ICONS: ICONS, CHECKLIST: CHECKLIST,
+    topbar: topbar, backbar: backbar, sheet: sheet, closeSheet: closeSheet, toast: toast, render: render, go: go, save: save
+  }) : null;
+  if (STAFF) Object.keys(STAFF.actions).forEach(function (k) { actions[k] = STAFF.actions[k]; });
+
+  try { history.replaceState({ mode: state.mode, tab: state.tab, stab: state.stab, view: null }, ''); } catch (e) { /* ok */ }
   render();
 })();
