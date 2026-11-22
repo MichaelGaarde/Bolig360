@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolig360 Service – planlagt service og samlet overblik over din bolig</title>
+<meta name="description" content="Bolig360 Service: planlagte servicebesøg, hjælp til de små opgaver og en digital servicebog i ét abonnement fra 399 kr./md.">
+<style>
+:root {
+  --bg: #f3f4ee; --card: #fff; --ink: #173f33; --green: #1a6e58; --green-dark: #1b4436;
+  --mint: #e3ecdf; --mint-soft: #edf2ea; --muted: #6b7a72; --line: #e3e6dd; --danger: #a63a2b;
+  --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--font); color: var(--ink); background: var(--bg); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+input, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+section { padding: 72px 0; }
+.eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+h1 { font-size: clamp(38px, 6vw, 64px); line-height: 1.05; letter-spacing: -.035em; font-weight: 600; }
+h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.12; letter-spacing: -.03em; font-weight: 600; margin-bottom: 14px; }
+h3 { font-size: 18px; font-weight: 600; }
+.lead { font-size: 18px; color: var(--muted); max-width: 620px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 14px; background: var(--green); color: #fff; font-weight: 500; }
+.btn:hover { background: var(--green-dark); }
+.btn.ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.btn.ghost:hover { background: var(--mint-soft); }
+.btn.light { background: #fff; color: var(--green-dark); }
+.btn.block { width: 100%; }
+
+/* Navigation */
+header { position: sticky; top: 0; z-index: 5; background: rgba(243, 244, 238, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; gap: 28px; height: 68px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.brand i { width: 36px; height: 36px; border-radius: 10px; background: var(--green); display: grid; place-items: center; color: #fff; }
+.brand b { font-weight: 600; color: var(--green); }
+nav { display: flex; gap: 24px; margin-left: auto; font-size: 15px; color: var(--muted); }
+nav a:hover { color: var(--ink); }
+header .btn { padding: 10px 16px; border-radius: 11px; font-size: 15px; }
+@media (max-width: 820px) { nav { display: none; } header .wrap { justify-content: space-between; gap: 12px; } header .actions { margin-left: auto; } }
+.actions { display: flex; gap: 8px; }
+
+/* Hero */
+.hero { padding: 80px 0 64px; }
+.hero .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items: center; }
+.hero .lead { margin: 22px 0 30px; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.visit { background: var(--green-dark); color: #fff; border-radius: 26px; padding: 28px; box-shadow: 0 30px 60px -30px rgba(23, 63, 51, .5); }
+.visit .eyebrow { color: rgba(255,255,255,.7); }
+.visit .date { font-size: 40px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+.visit .foot { border-top: 1px solid rgba(255,255,255,.2); margin-top: 22px; padding-top: 16px; font-size: 14px; display: flex; justify-content: space-between; }
+.mini { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-top: 12px; }
+.bar { height: 6px; border-radius: 3px; background: var(--mint); margin: 12px 0 10px; overflow: hidden; }
+.bar i { display: block; width: 40%; height: 100%; background: var(--green); }
+@media (max-width: 820px) { .hero { padding: 48px 0; } .hero .grid { grid-template-columns: 1fr; } }
+
+/* Pakker */
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+.plan { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 28px; display: flex; flex-direction: column; }
+.plan.featured { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+.plan .tag { align-self: flex-start; font-size: 12px; background: var(--mint); color: var(--green); padding: 4px 10px; border-radius: 8px; margin-bottom: 12px; }
+.plan .price { font-size: 40px; font-weight: 600; letter-spacing: -.03em; margin: 8px 0 2px; }
+.plan .price small { font-size: 15px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.plan ul { margin: 20px 0 24px; display: grid; gap: 10px; font-size: 15px; flex: 1; }
+.plan li { display: flex; gap: 10px; }
+.plan li::before { content: "✓"; color: var(--green); font-weight: 600; }
+.plan li.no { color: var(--muted); }
+.plan li.no::before { content: "–"; color: var(--muted); }
+.fine { background: var(--mint-soft); border-radius: 16px; padding: 18px 22px; margin-top: 18px; font-size: 14px; color: var(--muted); }
+.fine b { color: var(--ink); font-weight: 600; }
+@media (max-width: 820px) { .plans { grid-template-columns: 1fr; } }
+
+/* Trin og kort */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 36px; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+.box .n { width: 34px; height: 34px; border-radius: 10px; background: var(--mint); color: var(--green); display: grid; place-items: center; font-weight: 600; margin-bottom: 14px; }
+.box p { color: var(--muted); font-size: 15px; margin-top: 6px; }
+@media (max-width: 820px) { .steps, .cards { grid-template-columns: 1fr; } }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+@media (max-width: 820px) { .split { grid-template-columns: 1fr; gap: 28px; } }
+.table { background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; font-size: 15px; }
+.table div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 20px; }
+.table div + div { border-top: 1px solid var(--line); }
+.table span:last-child { color: var(--muted); text-align: right; }
+.checks { display: grid; gap: 12px; margin-top: 22px; }
+.checks li { display: flex; gap: 10px; }
+.checks li::before { content: "✓"; color: var(--green); font-weight: 600; }
+
+.dark { background: var(--green-dark); color: #fff; border-radius: 28px; padding: 48px; display: grid; grid-template-columns: 1.3fr .7fr; gap: 32px; align-items: center; }
+.dark .lead, .dark .eyebrow { color: rgba(255,255,255,.75); }
+.dark .btn { justify-self: end; }
+@media (max-width: 820px) { .dark { grid-template-columns: 1fr; padding: 32px 24px; } .dark .btn { justify-self: start; } }
+
+details { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; }
+details + details { margin-top: 10px; }
+summary { font-weight: 500; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+summary::after { content: "+"; color: var(--green); font-size: 20px; line-height: 1; }
+details[open] summary::after { content: "–"; }
+details p { color: var(--muted); margin-top: 10px; font-size: 15px; }
+
+footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+
+/* Dialoger */
+.overlay { position: fixed; inset: 0; background: rgba(23, 63, 51, .45); display: grid; place-items: center; padding: 16px; z-index: 20; }
+.dialog { background: var(--bg); border-radius: 26px; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; padding: 30px; position: relative; }
+.dialog h2 { font-size: 26px; }
+.dialog .x { position: absolute; top: 18px; right: 18px; width: 38px; height: 38px; border-radius: 50%; background: var(--card); font-size: 18px; }
+.field { display: block; margin-top: 14px; }
+.field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.field input, .field select { width: 100%; padding: 13px 15px; border-radius: 13px; border: 1px solid var(--line); background: var(--card); outline: none; }
+.field input:focus, .field select:focus { border-color: var(--green); }
+.error { color: var(--danger); font-size: 14px; margin-top: 12px; }
+.dialog .btn { margin-top: 20px; }
+.progress { display: flex; gap: 6px; margin: 4px 0 20px; }
+.progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--mint); }
+.progress i.on { background: var(--green); }
+.choice { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 10px; }
+.choice.on { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+.choice span { flex: 1; }
+.summary { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 6px 18px; margin-top: 14px; font-size: 15px; }
+.summary div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; }
+.summary div + div { border-top: 1px solid var(--line); }
+.summary span:first-child { color: var(--muted); }
+
+/* Min side */
+.account { padding: 56px 0 80px; }
+.account .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; margin-top: 30px; }
+@media (max-width: 820px) { .account .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" data-act="home"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></i><span>bolig<b>360</b></span></a>
+    <nav id="nav">
+      <a href="#pakker">Pakker</a>
+      <a href="#saadan">Sådan virker det</a>
+      <a href="#servicebog">Servicebog</a>
+      <a href="#foreninger">Foreninger og udlejere</a>
+      <a href="#faq">Spørgsmål</a>
+    </nav>
+    <div class="actions">
+      <button class="btn ghost" id="login-btn" data-act="login">Log ind</button>
+      <button class="btn" id="signup-btn" data-act="signup">Bliv kunde</button>
+    </div>
+  </div>
+</header>
+
+<main id="site">
+  <section class="hero" id="top">
+    <div class="wrap grid">
+      <div>
+        <div class="eyebrow">Bolig360 Service</div>
+        <h1>Din bolig.<br>I gode hænder.</h1>
+        <p class="lead">Vi planlægger servicen, hjælper med de små opgaver og samler historikken. Ét abonnement, faste besøg og en digital servicebog for din bolig.</p>
+        <div class="cta">
+          <a class="btn" href="#pakker">Se pakker og priser</a>
+          <a class="btn ghost" href="#saadan">Sådan virker det</a>
+        </div>
+      </div>
+      <div>
+        <div class="visit">
+          <div class="eyebrow">Næste servicebesøg</div>
+          <div class="date">12. november</div>
+          <div style="margin-top:10px;font-weight:500">Efterårsservice</div>
+          <div class="small" style="color:rgba(255,255,255,.7)">Torsdag · kl. 09.00-11.00</div>
+          <div class="foot"><span>✓ Bekræftet</span><span>Se besøget ↗</span></div>
+        </div>
+        <div class="mini">
+          <div style="display:flex;justify-content:space-between"><b>Din Total-pakke</b><span class="small muted">999 kr./md.</span></div>
+          <div class="bar"><i></i></div>
+          <div class="small" style="display:flex;justify-content:space-between"><span class="muted">2 timer brugt</span><b>3 timer tilbage</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pakker" style="padding-top:24px">
+    <div class="wrap">
+      <div class="eyebrow">Pakker og priser</div>
+      <h2>Vælg det, der passer til din bolig</h2>
+      <p class="lead">Alle priser er inklusive moms. Pakkerne gælder én almindelig bolig op til 200 m².</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>Basis</h3>
+          <div class="price">399 kr.<small> /md.</small></div>
+          <p class="small muted">4.788 kr. for 12 måneder</p>
+          <ul>
+            <li>1 årligt servicebesøg</li>
+            <li>Gennemgang på ca. 60 minutter</li>
+            <li>Rapport, billeder og prioriterede observationer</li>
+            <li>App og digital servicebog</li>
+            <li class="no">Småservice er ikke inkluderet</li>
+          </ul>
+          <button class="btn ghost block" data-act="signup" data-plan="basis">Vælg Basis</button>
+        </div>
+        <div class="plan featured">
+          <span class="tag">Mest valgt</span>
+          <h3>Plus</h3>
+          <div class="price">599 kr.<small> /md.</small></div>
+          <p class="small muted">7.188 kr. for 12 måneder</p>
+          <ul>
+            <li>2 årlige servicebesøg, forår og efterår</li>
+            <li>2 timers småservice årligt</li>
+            <li>Rapport, billeder og prioriterede observationer</li>
+            <li>App og digital servicebog</li>
+            <li>Servicekalender opdateres efter hvert besøg</li>
+          </ul>
+          <button class="btn block" data-act="signup" data-plan="plus">Vælg Plus</button>
+        </div>
+        <div class="plan">
+          <h3>Total</h3>
+          <div class="price">999 kr.<small> /md.</small></div>
+          <p class="small muted">11.988 kr. for 12 måneder</p>
+          <ul>
+            <li>2 årlige servicebesøg, forår og efterår</li>
+            <li>5 timers småservice årligt</li>
+            <li>Rapport, billeder og prioriterede observationer</li>
+            <li>App og digital servicebog</li>
+            <li>Servicekalender opdateres efter hvert besøg</li>
+          </ul>
+          <button class="btn ghost block" data-act="signup" data-plan="total">Vælg Total</button>
+        </div>
+      </div>
+      <div class="fine"><b>Ikke inkluderet i nogen pakke:</b> materialer og reservedele, autorisationskrævende arbejde, ekstra fremmøde, større reparationer samt døgnvagt og akut udrykning. Småservice udføres under de planlagte besøg, og ubrugte timer overføres ikke til næste år. Abonnementet er ikke en forsikring. Du godkender altid tilkøb, før vi udfører dem.</div>
+    </div>
+  </section>
+
+  <section id="saadan">
+    <div class="wrap">
+      <div class="eyebrow">Sådan virker det</div>
+      <h2>Fra tilmelding til opdateret servicebog</h2>
+      <div class="steps">
+        <div class="box"><div class="n">1</div><h3>Afklaring</h3><p>Du fortæller om boligen, og vi aftaler et tydeligt omfang. Kendte fejl registreres fra start.</p></div>
+        <div class="box"><div class="n">2</div><h3>Planlægning</h3><p>Du får en servicekalender og melder dine små opgaver ind i appen før besøget.</p></div>
+        <div class="box"><div class="n">3</div><h3>Besøget</h3><p>Teknikeren følger tjeklisten, løser de aftalte opgaver og tager billeder undervejs.</p></div>
+        <div class="box"><div class="n">4</div><h3>Rapport</h3><p>Senest to arbejdsdage efter ligger rapporten i din servicebog med anbefalede næste skridt.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap split">
+      <div>
+        <div class="eyebrow">Gennemgangen</div>
+        <h2>Ni områder, hver gang</h2>
+        <p class="lead">Vi ser på de synlige og tilgængelige dele af boligen og laver enkle funktionstest. Finder vi noget, får du en prioriteret anbefaling og et tilbud, du selv tager stilling til.</p>
+        <p class="small muted" style="margin-top:16px">Gennemgangen er et servicebesøg med observationer. Den erstatter ikke en tilstandsrapport, elinstallationsrapport, energimærkning eller lovpligtige eftersyn.</p>
+      </div>
+      <div class="table">
+        <div><span>Toiletter og vandlåse</span><span>Utætheder og løbende toilet</span></div>
+        <div><span>Varme</span><span>Synlige lækager og betjening</span></div>
+        <div><span>VVS</span><span>Tegn på lækage</span></div>
+        <div><span>El</span><span>Synlige skader og enkel test</span></div>
+        <div><span>Klimaskærm</span><span>Facade, sokkel, vinduer og døre</span></div>
+        <div><span>Vinduer og døre</span><span>Funktionskontrol</span></div>
+        <div><span>Tagrender og nedløb</span><span>Tilstopning og utæthed</span></div>
+        <div><span>Sandfangsbrønd</span><span>Observation ved forsvarlig adgang</span></div>
+        <div><span>Terrasse og fliser</span><span>Slid og vedligeholdelsesbehov</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="servicebog" style="padding-top:0">
+    <div class="wrap split">
+      <div class="table">
+        <div><span>Besøg og rapporter</span><span>Dato, tekniker og tidsforbrug</span></div>
+        <div><span>Billeder</span><span>Før og efter</span></div>
+        <div><span>Observationer</span><span>Med prioritet og anbefaling</span></div>
+        <div><span>Tilbud og godkendelser</span><span>Samlet med fakturaer</span></div>
+        <div><span>Servicetimer</span><span>Brugt og tilbage</span></div>
+      </div>
+      <div>
+        <div class="eyebrow">Digital servicebog og app</div>
+        <h2>Boligens historik, samlet ét sted</h2>
+        <p class="lead">Servicebogen følger boligen og dokumenterer det arbejde, der faktisk er udført.</p>
+        <ul class="checks">
+          <li>Se næste besøg og hele årets serviceplan</li>
+          <li>Tilføj småopgaver til det kommende besøg</li>
+          <li>Godkend tilbud, før der opstår en ekstraudgift</li>
+          <li>Eksportér servicehistorikken, hvis du sælger boligen</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="eyebrow">Tilvalg</div>
+      <h2>Byg ovenpå, når du har brug for det</h2>
+      <p class="lead">Tilvalg prissættes efter din bolig og kan fordeles på den månedlige betaling. Ekstra småservice koster 750 kr. pr. arbejdstime inkl. moms under et planlagt besøg.</p>
+      <div class="cards">
+        <div class="box"><h3>Vinduespudsning</h3><p>Fast månedligt tillæg efter antal ruder, adgang og hyppighed.</p></div>
+        <div class="box"><h3>Tagrenderens</h3><p>Sæsonaftale eller enkeltopgave efter længde, højde og adgang.</p></div>
+        <div class="box"><h3>Terrasse og fliser</h3><p>Vask, behandling og fliserens efter besigtigelse og konkret tilbud.</p></div>
+        <div class="box"><h3>Varme og ventilation</h3><p>Specialistabonnement efter anlægstype og fabrikantens krav.</p></div>
+        <div class="box"><h3>Have- og vinterservice</h3><p>Særskilt driftsaftale efter areal, hyppighed og serviceniveau.</p></div>
+        <div class="box"><h3>Sandfang</h3><p>Planlagt aftale eller enkeltopgave efter antal brønde og adgang.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="foreninger" style="padding-top:0">
+    <div class="wrap">
+      <div class="dark">
+        <div>
+          <div class="eyebrow">Ejer- og andelsforeninger · Udlejningsejendomme</div>
+          <h2>En ejendomsaftale med tydeligt omfang</h2>
+          <p class="lead">Fællesarealer og fælles installationer får deres egen aftale med aktivitetsliste, tidsbudget og pris. Beboerne kan købe Basis, Plus eller Total til deres egne boliger, og timer og dokumentation holdes adskilt.</p>
+        </div>
+        <button class="btn light" data-act="signup" data-plan="ejendom">Få et tilbud</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top:0">
+    <div class="wrap" style="max-width:820px">
+      <div class="eyebrow">Spørgsmål og svar</div>
+      <h2>Godt at vide</h2>
+      <div style="margin-top:28px">
+        <details><summary>Hvad er småservice?</summary><p>Mindre praktiske opgaver som opsætning af et billede eller en hylde, let justering af en låge, smøring af beslag eller rensning af en let tilgængelig vandlås. Opgaverne bestilles på forhånd og udføres under de planlagte besøg.</p></details>
+        <details><summary>Er reparationer inkluderet?</summary><p>Nej. Abonnementet dækker de planlagte besøg, gennemgangen og din pulje af småservice. Reparationer, materialer og arbejde, der kræver autorisation, aftales særskilt, og du godkender altid prisen først.</p></details>
+        <details><summary>Er der binding?</summary><p>Du betaler månedligt og kan opsige digitalt. De præcise vilkår for opsigelse og fordeling af servicetimer fremgår af din aftale.</p></details>
+        <details><summary>Hvad hvis min bolig er over 200 m²?</summary><p>Større boliger og boliger med særlige tekniske anlæg får et konkret tillæg, som du ser, før du indgår aftalen.</p></details>
+        <details><summary>Kan jeg få hjælp akut?</summary><p>Abonnementet omfatter ikke døgnvagt eller akut udrykning, og beskeder i appen overvåges ikke døgnet rundt. Ved akut fare skal du ringe 112 eller kontakte dit forsikringsselskabs skadeservice.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<main id="account" class="account" hidden>
+  <div class="wrap">
+    <div class="eyebrow">Min side</div>
+    <h1 style="font-size:clamp(34px,5vw,52px)">Velkommen tilbage.</h1>
+    <div class="grid">
+      <div>
+        <div class="visit">
+          <div class="eyebrow">Næste servicebesøg</div>
+          <div class="date">12. november</div>
+          <div style="margin-top:10px;font-weight:500">Efterårsservice · Lindevænget 24</div>
+          <div class="small" style="color:rgba(255,255,255,.7)">Torsdag · kl. 09.00-11.00</div>
+          <div class="foot"><span>✓ Bekræftet</span><a href="../app/index.html">Åbn i appen ↗</a></div>
+        </div>
+        <div class="mini">
+          <div style="display:flex;justify-content:space-between"><b>Din Total-pakke</b><span class="small muted">999 kr./md.</span></div>
+          <p class="small muted" style="margin-top:4px">2 besøg og 5 timers småservice pr. år</p>
+          <div class="bar"><i></i></div>
+          <div class="small" style="display:flex;justify-content:space-between"><span class="muted">2 timer brugt</span><b>3 timer tilbage</b></div>
+        </div>
+      </div>
+      <div>
+        <div class="summary" style="margin-top:0">
+          <div><span>Adresse</span><span>Lindevænget 24</span></div>
+          <div><span>Næste betaling</span><span>1. december</span></div>
+          <div><span>Seneste rapport</span><span>Forårsservice, 23. april</span></div>
+          <div><span>Tilbud til godkendelse</span><span>1</span></div>
+        </div>
+        <a class="btn block" style="margin-top:14px" href="../app/index.html">Åbn appen</a>
+        <button class="btn ghost block" style="margin-top:10px" data-act="logout">Log ud</button>
+        <p class="small muted" style="margin-top:14px">Servicebog, bestilling af opgaver og godkendelse af tilbud foregår i appen.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Bolig360 Service · Prototype med testdata</span>
+    <span>Planlagt service og samlet overblik over din bolig</span>
+  </div>
+</footer>
+
+<div class="overlay" id="overlay" hidden><div class="dialog" id="dialog"></div></div>
+
+<script>
+(function () {
+  'use strict';
+  // Mock-login (kun til prototypen)
+  var MOCK_USER = 'test', MOCK_PASS = 'test', KEY = 'bolig360-web-v1';
+  var PLANS = {
+    basis: { name: 'Basis', price: '399 kr./md.', info: '1 årligt besøg' },
+    plus: { name: 'Plus', price: '599 kr./md.', info: '2 årlige besøg · 2 timers småservice' },
+    total: { name: 'Total', price: '999 kr./md.', info: '2 årlige besøg · 5 timers småservice' },
+    ejendom: { name: 'Ejendomsaftale', price: 'Konkret tilbud', info: 'Forening eller udlejningsejendom' }
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var form = { step: 1, plan: 'plus', address: '', type: 'Parcelhus', area: '', name: '', email: '', phone: '' };
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function authed() { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+  function setAuth(v) { try { v ? localStorage.setItem(KEY, '1') : localStorage.removeItem(KEY); } catch (e) {} showPage(v); }
+
+  function showPage(isAuthed) {
+    $('site').hidden = isAuthed; $('account').hidden = !isAuthed; $('nav').hidden = isAuthed;
+    $('signup-btn').hidden = isAuthed;
+    $('login-btn').textContent = isAuthed ? 'Log ud' : 'Log ind';
+    $('login-btn').dataset.act = isAuthed ? 'logout' : 'login';
+    window.scrollTo(0, 0);
+  }
+
+  function open(html) { $('dialog').innerHTML = '<button class="x" data-act="close" aria-label="Luk">✕</button>' + html; $('overlay').hidden = false; }
+  function close() { $('overlay').hidden = true; }
+
+  function loginDialog() {
+    open('<div class="eyebrow">Min side</div><h2>Log ind</h2>' +
+      '<form id="login-form" autocomplete="off"><label class="field"><span>Brugernavn</span><input id="l-user" autocapitalize="none" spellcheck="false"></label>' +
+      '<label class="field"><span>Adgangskode</span><input id="l-pass" type="password"></label>' +
+      '<p class="error" id="l-error" hidden>Forkert brugernavn eller adgangskode.</p>' +
+      '<button class="btn block" type="submit">Log ind</button></form>' +
+      '<p class="small muted" style="margin-top:14px;text-align:center">Prototype · testlogin: test / test</p>');
+    $('l-user').focus();
+  }
+
+  function signupDialog() {
+    var s = form.step, body;
+    var progress = '<div class="progress">' + [1, 2, 3, 4].map(function (n) { return '<i class="' + (n <= s ? 'on' : '') + '"></i>'; }).join('') + '</div>';
+    if (s === 1) {
+      body = '<h2>Vælg pakke</h2>' + Object.keys(PLANS).map(function (k) {
+        var p = PLANS[k];
+        return '<button type="button" class="choice ' + (form.plan === k ? 'on' : '') + '" data-act="pick" data-plan="' + k + '"><span><b>' + p.name + '</b><br><span class="small muted">' + p.info + '</span></span><b>' + p.price + '</b></button>';
+      }).join('') + '<button class="btn block" data-act="next">Fortsæt</button>';
+    } else if (s === 2) {
+      body = '<h2>Om boligen</h2><form id="step-form">' +
+        '<label class="field"><span>Adresse</span><input id="f-address" required value="' + esc(form.address) + '"></label>' +
+        '<label class="field"><span>Boligtype</span><select id="f-type">' + ['Parcelhus', 'Rækkehus', 'Ejerlejlighed', 'Andelsbolig', 'Sommerhus', 'Ejendom med flere boliger'].map(function (t) { return '<option' + (form.type === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></label>' +
+        '<label class="field"><span>Boligareal i m²</span><input id="f-area" type="number" min="10" max="5000" required value="' + esc(form.area) + '"></label>' +
+        '<button class="btn block" type="submit">Fortsæt</button><button type="button" class="btn ghost block" style="margin-top:10px" data-act="prev">Tilbage</button></form>';
+    } else if (s === 3) {
+      body = '<h2>Dine oplysninger</h2><form id="step-form">' +
+        '<label class="field"><span>Navn</span><input id="f-name" required value="' + esc(form.name) + '"></label>' +
+        '<label class="field"><span>E-mail</span><input id="f-email" type="email" required value="' + esc(form.email) + '"></label>' +
+        '<label class="field"><span>Telefon</span><input id="f-phone" type="tel" required value="' + esc(form.phone) + '"></label>' +
+        '<button class="btn block" type="submit">Se opsummering</button><button type="button" class="btn ghost block" style="margin-top:10px" data-act="prev">Tilbage</button></form>';
+    } else {
+      var p = PLANS[form.plan], big = Number(form.area) > 200 && form.plan !== 'ejendom';
+      body = '<h2>Tak, ' + esc(form.name.split(' ')[0]) + '.</h2><p class="muted">Vi kontakter dig inden for to arbejdsdage for at afklare omfang og aftale første besøg. Du betaler først, når aftalen er bekræftet.</p>' +
+        '<div class="summary"><div><span>Pakke</span><span>' + p.name + ' · ' + p.price + '</span></div><div><span>Bolig</span><span>' + esc(form.type) + ' · ' + esc(form.area) + ' m²</span></div><div><span>Adresse</span><span>' + esc(form.address) + '</span></div><div><span>Kontakt</span><span>' + esc(form.email) + '</span></div></div>' +
+        (big ? '<p class="small muted" style="margin-top:12px">Boliger over 200 m² får et konkret tillæg, som du ser og godkender, før aftalen indgås.</p>' : '') +
+        '<p class="small muted" style="margin-top:12px">Prototype: oplysningerne er ikke sendt eller gemt.</p><button class="btn block" data-act="close">Luk</button>';
+    }
+    open('<div class="eyebrow">Bliv kunde · trin ' + s + ' af 4</div>' + progress + body);
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target.id === 'overlay') { close(); return; }
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var act = el.dataset.act;
+    if (act === 'login') loginDialog();
+    else if (act === 'logout') setAuth(false);
+    else if (act === 'close') close();
+    else if (act === 'signup') { form.step = 1; if (el.dataset.plan) form.plan = el.dataset.plan; signupDialog(); }
+    else if (act === 'pick') { form.plan = el.dataset.plan; signupDialog(); }
+    else if (act === 'next') { form.step++; signupDialog(); }
+    else if (act === 'prev') { form.step--; signupDialog(); }
+  });
+
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (e.target.id === 'login-form') {
+      if ($('l-user').value.trim().toLowerCase() === MOCK_USER.toLowerCase() && $('l-pass').value === MOCK_PASS) { close(); setAuth(true); }
+      else $('l-error').hidden = false;
+    } else if (e.target.id === 'step-form') {
+      if (form.step === 2) { form.address = $('f-address').value.trim(); form.type = $('f-type').value; form.area = $('f-area').value; }
+      if (form.step === 3) { form.name = $('f-name').value.trim(); form.email = $('f-email').value.trim(); form.phone = $('f-phone').value.trim(); }
+      form.step++; signupDialog();
+    }
+  });
+
+  if (authed()) showPage(true);
+})();
+</script>
+</body>
+</html>
