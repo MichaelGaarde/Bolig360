@@ -153,10 +153,7 @@
   function topbar(staff) {
     var right = staff ? '<button class="iconbtn" data-act="s-akut" aria-label="Akut fare">' + icon('alert', 20) + '</button>' :
       '<button class="iconbtn" data-act="notifs" aria-label="Notifikationer">' + icon('bell', 20) + (state.notifSeen ? '' : '<i class="dot"></i>') + '</button>';
-    var modes = STAFF ? '<div class="mode" role="tablist" aria-label="Visning">' + [['kunde', 'Kunde'], ['staff', 'Medarbejder']].map(function (m) {
-      return '<button data-act="mode" data-id="' + m[0] + '" class="' + (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
-    }).join('') + '</div>' : '';
-    return '<div class="topbar">' + brand() + right + '</div>' + modes +
+    return '<div class="topbar">' + brand() + right + '</div>' +
       (staff ? '' : '<button class="address" data-act="home-info">' + icon('pin', 18) + '<span class="grow">' + HOME.address + ' · ' + HOME.label + '</span>' + icon('down', 18) + '</button>');
   }
   function brand() {
@@ -191,9 +188,13 @@
   }
 
   // ---------- Skærme ----------
+  var LOGIN_TITLE = { kunde: 'Log ind på<br>din bolig.', staff: 'Log ind på<br>din rute.' };
   function vLogin() {
+    var modes = STAFF ? '<div class="mode" role="tablist" aria-label="Log ind som">' + [['kunde', 'Kunde'], ['staff', 'Medarbejder']].map(function (m) {
+      return '<button type="button" data-act="mode" data-id="' + m[0] + '" class="' + (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
+    }).join('') + '</div>' : '';
     return '<div class="login">' + brand() +
-      '<div class="eyebrow">Velkommen</div><h1 class="headline">Log ind på<br>din bolig.</h1>' +
+      '<div class="eyebrow">Velkommen</div><h1 class="headline" id="login-title">' + LOGIN_TITLE[isStaff() ? 'staff' : 'kunde'] + '</h1>' + modes +
       '<form id="login-form" autocomplete="off">' +
       '<label class="field"><span>Brugernavn</span><input id="login-user" autocapitalize="none" spellcheck="false"></label>' +
       '<label class="field"><span>Adgangskode</span><input id="login-pass" type="password"></label>' +
@@ -402,7 +403,6 @@
     if (!state.auth) return;
     var h = e.state || {};
     closeSheet();
-    state.mode = h.mode || 'kunde';
     state.tab = h.tab || 'overblik';
     state.stab = h.stab || 'idag';
     state.view = h.view || null;
@@ -413,9 +413,13 @@
   var actions = {
     tab: function (id) { go(id); },
     back: function () { if (history.state && history.state.view) history.back(); else go(state[tabKey()]); },
-    mode: function (id) {
-      if (id === state.mode) return;
-      state.mode = id; state.view = null; closeSheet(); pushHistory(); render();
+    mode: function (id, el) {
+      // Rollen vælges på login-skærmen; felterne beholder det, der er skrevet
+      if (state.auth) return;
+      state.mode = id;
+      $('login-title').innerHTML = LOGIN_TITLE[id];
+      [].forEach.call(el.parentElement.children, function (b) { b.classList.toggle('on', b === el); });
+      save();
     },
     season: function (id) { state.season = id; render(true); },
     'open-visit': function (id) { go(state.tab, { name: 'visit', id: id }); },
@@ -443,7 +447,7 @@
     'cancel-confirm': function () { closeSheet(); toast('Prototype: opsigelsen er ikke gennemført'); },
     'export': function () { toast('Prototype: eksport kommer i næste version'); },
     reschedule: function () { toast('Vi kontakter dig om et nyt tidspunkt'); },
-    logout: function () { state.auth = false; state.mode = 'kunde'; state.tab = 'overblik'; state.stab = 'idag'; state.view = null; closeSheet(); render(); }
+    logout: function () { state.auth = false; state.tab = 'overblik'; state.stab = 'idag'; state.view = null; closeSheet(); render(); }
   };
 
   document.addEventListener('click', function (e) {
