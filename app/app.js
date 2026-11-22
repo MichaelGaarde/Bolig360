@@ -383,6 +383,7 @@
       return '<button data-act="tab" data-id="' + t[0] + '" class="' + (state[tabKey()] === t[0] && !state.view ? 'on' : '') + '">' + icon(t[2]) + (n ? '<i class="badge">' + n + '</i>' : '') + '<span>' + t[1] + '</span></button>';
     }).join('');
     save();
+    if (staff && STAFF.after) STAFF.after();
   }
 
   function isStaff() { return !!STAFF && state.mode === 'staff'; }

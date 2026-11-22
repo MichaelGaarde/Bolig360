@@ -13,7 +13,8 @@ window.B360Staff = function (api) {
     left: '<path d="m15 6-6 6 6 6"/>',
     box: '<path d="M4 8 12 4l8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>',
     msg: '<path d="M4 5h16v11H9l-5 4z"/>',
-    expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>'
+    expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
+    shrink: '<path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7"/>'
   });
 
   // ---------- Datoer ----------
@@ -99,10 +100,15 @@ window.B360Staff = function (api) {
     [[26, 42], [50, 35], [76, 25], [80, 62], [48, 74]]
   ];
   var DEPOT = [9, 13];
-  function mapsUrl(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v.addr); }
+  // Testkoordinater: stoppene lægges i et område vest for Aarhus C, så kortet har noget rigtigt at vise
+  var CENTER = [56.1555, 10.1650];
+  function geo(p) { return [CENTER[0] + (50 - p[1]) / 100 * 0.03, CENTER[1] + (p[0] - 50) / 100 * 0.06]; }
+  function ll(v) { return geo(spot(v.date, on(v.date).indexOf(v))); }
+  function coord(v) { var c = ll(v); return c[0].toFixed(5) + ',' + c[1].toFixed(5); }
+  function mapsUrl(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(coord(v)); }
   function routeUrl(list) {
     if (!list.length) return '#';
-    var stops = list.map(function (v) { return v.addr; });
+    var stops = list.map(coord);
     return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(stops[stops.length - 1]) +
       (stops.length > 1 ? '&waypoints=' + encodeURIComponent(stops.slice(0, -1).join('|')) : '');
   }
@@ -152,15 +158,46 @@ window.B360Staff = function (api) {
     return svg + '</svg>';
   }
 
-  function sMap() {
-    var list = on(baseIso);
-    return api.backbar('Dagens rute') + '<div class="eyebrow">' + cap(nice(base)) + ' · ' + list.length + ' stop</div>' +
-      '<div class="routemap full">' + mapSvg(list, 320, 400, true) + '</div>' +
-      '<p class="small muted" style="margin:12px 0 16px">Tryk på et punkt for at åbne adressen i Google Maps.</p>' +
-      '<a class="btn" href="' + routeUrl(list) + '" target="_blank" rel="noopener">' + icon('route', 20) + 'Hele ruten i Google Maps</a>' +
-      '<h2 class="section-title">Stop i rækkefølge</h2><div class="list">' + list.map(function (v, i) {
-        return '<button data-act="s-open" data-id="' + v.id + '"><div class="ico">' + (i + 1) + '</div><div class="grow"><div class="t">' + v.addr + '</div><div class="s">kl. ' + v.time + ' · ' + v.name + '</div></div>' + statusPill(v) + '</button>';
-      }).join('') + '</div>';
+  // Rigtigt kort (Leaflet + OpenStreetMap). Bygges efter hver rendering; det tegnede kort er reserve uden net.
+  var lmap = null, lastMax = null;
+  function pinIcon(html, cls, label) {
+    return L.divIcon({ className: '', iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14],
+      html: '<div class="pin ' + cls + '">' + html + '</div>' + (label ? '<span class="pinlbl">' + label + '</span>' : '') });
+  }
+  function after() {
+    // Et maksimeret kort fra forrige rendering ligger direkte i telefonrammen og ryddes væk først
+    [].forEach.call(document.querySelectorAll('#phone > .mapwrap'), function (n) { n.remove(); });
+    var el = $('routemap');
+    if (el && el.parentElement.classList.contains('max')) $('phone').appendChild(el.parentElement);
+    if (!el || !window.L) { if (lmap && !el) { try { lmap.remove(); } catch (e) { /* ok */ } lmap = null; } return; }
+    var max = el.parentElement.classList.contains('max');
+    var keep = lmap && lastMax === max ? { c: lmap.getCenter(), z: lmap.getZoom() } : null;
+    if (lmap) { try { lmap.remove(); } catch (e) { /* ok */ } }
+    lastMax = max;
+
+    var list = on(baseIso), pts = list.map(ll), depot = geo(DEPOT), nextIdx = -1;
+    list.forEach(function (v, i) { if (nextIdx < 0 && vs(v.id).status !== 'done') nextIdx = i; });
+    lmap = L.map(el, { zoomControl: max, scrollWheelZoom: max });
+    lmap.attributionControl.setPrefix(false);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(lmap);
+
+    var prev = depot;
+    pts.forEach(function (p, i) {
+      var done = vs(list[i].id).status === 'done';
+      L.polyline([prev, p], { color: '#1b4436', weight: 4, opacity: .9, dashArray: done ? null : '1 9', lineCap: 'round', interactive: false }).addTo(lmap);
+      prev = p;
+    });
+    L.marker(depot, { icon: pinIcon(icon('home', 16), 'depot'), interactive: false, keyboard: false }).addTo(lmap);
+    pts.forEach(function (p, i) {
+      var v = list[i], status = vs(v.id).status;
+      var m = L.marker(p, { icon: pinIcon(i + 1, status === 'done' ? 'done' : i === nextIdx ? 'next' : '', max ? v.time : ''), title: v.addr, alt: 'Stop ' + (i + 1) + ': ' + v.addr }).addTo(lmap);
+      if (max) m.on('click', function () { window.open(mapsUrl(v), '_blank', 'noopener'); });
+      else m.bindPopup('<b>' + (i + 1) + '. ' + v.addr + '</b><br>kl. ' + v.time + ' · ' + v.name, { closeButton: false });
+    });
+    if (keep) lmap.setView(keep.c, keep.z, { animate: false });
+    else lmap.fitBounds([depot].concat(pts), { paddingTopLeft: max ? [50, 70] : [26, 26], paddingBottomRight: max ? [50, 170] : [26, 26], animate: false });
+    var mine = lmap;
+    setTimeout(function () { if (lmap === mine) lmap.invalidateSize(); }, 320); // efter skærmens indtoning
   }
 
   // ---------- Skærme ----------
@@ -171,6 +208,12 @@ window.B360Staff = function (api) {
     var bring = [];
     list.forEach(function (v) { if (vs(v.id).status !== 'done') v.bring.forEach(function (b) { bring.push([b, v.addr]); }); });
     var isToday = baseIso === iso(today);
+    var max = !!(state.view && state.view.name === 'smap');
+    var mapBlock = '<div class="card routemap" style="margin-top:16px"><h3 style="margin-bottom:12px">Rutekort</h3><div class="mapwrap' + (max ? ' max' : '') + '">' +
+      '<div id="routemap">' + (window.L ? '' : mapSvg(list, 320, max ? 400 : 170, max)) + '</div>' +
+      '<button class="iconbtn mapctl" data-act="' + (max ? 'back' : 's-map') + '" aria-label="' + (max ? 'Minimér kortet' : 'Maksimér kortet') + '">' + icon(max ? 'shrink' : 'expand', 20) + '</button>' +
+      (max ? '<div class="mapfoot"><p class="small muted">Træk i kortet for at se dig omkring. Tryk på et punkt for at åbne det i Google Maps.</p><a class="btn" href="' + routeUrl(list) + '" target="_blank" rel="noopener">' + icon('route', 20) + 'Hele ruten i Google Maps</a></div>' : '') +
+      '</div></div>';
 
     var hero = next ? '<button class="hero" data-act="s-open" data-id="' + next.id + '"><div class="eyebrow">' + (vs(next.id).status === 'started' ? 'Besøg i gang' : 'Næste besøg') + '</div>' +
       '<div class="between" style="align-items:flex-start"><div><div class="date">' + next.time + '</div><div class="sub">' + next.addr + '</div><div class="when">' + next.name + ' · ' + next.plan + ' · ca. ' + mins(planned(next)) + '</div></div><div class="cal">' + icon('route', 20) + '</div></div>' +
@@ -179,8 +222,7 @@ window.B360Staff = function (api) {
 
     return api.topbar(true) + '<div class="eyebrow">' + (isToday ? 'I dag' : 'Næste rutedag') + ' · ' + nice(base) + '</div>' +
       '<h1 class="headline">' + list.length + ' besøg<br>på ruten.</h1>' + hero +
-      '<div class="card routemap" style="margin-top:16px"><div class="between" style="margin-bottom:12px"><h3>Rutekort</h3><button class="iconbtn sm" data-act="s-map" aria-label="Maksimér kortet">' + icon('expand', 18) + '</button></div>' +
-      '<button class="mapbtn" data-act="s-map" aria-label="Åbn kortet i fuld størrelse">' + mapSvg(list, 320, 170, false) + '</button></div>' +
+      mapBlock +
       '<div class="tiles"><button class="tile" data-act="tab" data-id="opgaver">' + icon('tasks') + '<span>' + openTodos() + ' åbne opgaver</span></button>' +
       '<button class="tile" data-act="tab" data-id="kalender">' + icon('cal') + '<span>Se kalenderen</span></button></div>' +
       '<div class="card" style="margin-top:16px"><div class="between"><h3>Dagens rute</h3><span class="pill">' + done + ' af ' + list.length + '</span></div>' +
@@ -217,7 +259,7 @@ window.B360Staff = function (api) {
       '<div class="kv" style="margin-top:8px"><span>Tid på stedet</span><span>kl. ' + clock(s.start) + '-' + clock(s.end) + '</span></div><div class="kv"><span>Småservice</span><span>' + mins(used) + '</span></div>' +
       '<div class="kv"><span>Observationer</span><span>' + Object.keys(s.check).filter(function (k) { return s.check[k].s === 'obs'; }).length + '</span></div></div>';
 
-    var maps = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v.addr);
+    var maps = mapsUrl(v);
     var pics = photos[v.id] || [];
 
     return api.backbar(v.addr) +
@@ -350,10 +392,10 @@ window.B360Staff = function (api) {
     badge: function (tab) { return tab === 'opgaver' ? openTodos() : 0; },
     screen: function () {
       if (state.view && state.view.name === 'svisit' && byId(state.view.id)) return sVisit(byId(state.view.id));
-      if (state.view && state.view.name === 'smap') return sMap();
       return { idag: sToday, kalender: sCalendar, opgaver: sTodos, profil: sProfile }[state.stab]();
     },
     actions: actions,
-    submit: submit
+    submit: submit,
+    after: after
   };
 };
